@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'builder', '~> 3.2'
   s.add_runtime_dependency 'net-http-digest_auth', '~> 1.4'
+  s.add_runtime_dependency 'icalendar', '~> 2.3'
 
   s.add_development_dependency 'rspec', '~> 3.5'
   s.add_development_dependency 'fakeweb', '~> 1.3'

@@ -17,7 +17,7 @@ module SabredavClient
       etag = %Q/#{etag.gsub(/\A['"]+|['"]+\Z/, "")}/ unless etag.nil?
 
       {
-        ics: res.body,
+        ics: Icalendar.parse(res.body).first,
         etag: etag
       }
     end
@@ -33,16 +33,20 @@ module SabredavClient
         body = SabredavClient::XmlRequestBuilder::ReportVEVENT.new(Time.parse(starts).utc.strftime("%Y%m%dT%H%M%S"),
                                                       Time.parse(ends).utc.strftime("%Y%m%dT%H%M%S") ).to_xml
       end
-
-      req = client.create_request(:report, header: header)
+      req = client.create_request(:report, header: header, body: body)
       res = req.run
-
       SabredavClient::Errors::errorhandling(res)
-      result = ""
+      result = []
 
       xml = REXML::Document.new(res.body)
-      REXML::XPath.each( xml, '//c:calendar-data/', {"c"=>"urn:ietf:params:xml:ns:caldav"} ){|c| result << c.text}
-
+      all_nodes = xml.root.elements
+      all_nodes.each do |nodes|
+        result << {
+          :ical => Icalendar.parse(nodes.elements["//d:response/d:propstat/d:prop/cal:calendar-data"].text),
+          :url => nodes.elements["//d:response/d:href"].text
+        }
+      end
+      #REXML::XPath.each( xml, '//c:calendar-data/', {"c"=>"urn:ietf:params:xml:ns:caldav"} ){|c| result << c.text + "\n"}
       result
     end
 

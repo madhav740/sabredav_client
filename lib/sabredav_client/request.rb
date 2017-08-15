@@ -9,7 +9,7 @@ module SabredavClient
       @http    = build_http
       @request = build_request(method)
 
-      add_auth
+      add_auth(method)
     end
 
     def add_body(body)
@@ -21,10 +21,11 @@ module SabredavClient
       request['If-Match']        = data[:if_match]        if data[:if_match]
       request['Content-Type']    = data[:content_type]    if data[:content_type]
       request['DAV']             = data[:dav]             if data[:dav]
+      request['Depth']            = data[:depth]           if data[:depth]
     end
 
     def run
-      @http.request(request)
+      http.request(request)
     end
 
     private
@@ -69,7 +70,7 @@ module SabredavClient
       end
     end
 
-    def add_auth
+    def add_auth(method)
       unless client.authtype == 'digest'
         request.basic_auth client.user, client.password
       else
@@ -77,7 +78,7 @@ module SabredavClient
       end
     end
 
-    def digestauth
+    def digestauth(method)
       h = Net::HTTP.new client.duri.host, client.duri.port
 
       if client.ssl
