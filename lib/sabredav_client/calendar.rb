@@ -19,6 +19,7 @@ module SabredavClient
       res = req.run
 
       SabredavClient::Errors::errorhandling(res)
+      result = []
 
       xml = REXML::Document.new(res.body)
       all_nodes = xml.root.elements
