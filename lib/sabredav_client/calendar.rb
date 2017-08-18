@@ -21,11 +21,23 @@ module SabredavClient
       SabredavClient::Errors::errorhandling(res)
 
       xml = REXML::Document.new(res.body)
-      {
-        displayname: REXML::XPath.first(xml, "//d:displayname").text,
-        ctag: REXML::XPath.first(xml, "//cs:getctag").text,
-        sync_token: REXML::XPath.first(xml, "//d:sync-token").text
-      }
+      all_nodes = xml.root.elements
+      all_nodes.each do |nodes|
+        result << {
+          status: nodes.elements["d:propstat/d:status"].text.split()[1],
+          calendar_url: nodes.elements["d:href"].text,
+          displayname: nodes.elements["d:propstat/d:prop/d:displayname"].text,
+          sync_token: nodes.elements["d:propstat/d:prop/d:sync-token"].text,
+          ctag: nodes.elements["d:propstat/d:prop/cs:getctag"].text
+        }
+      end
+      result
+      # {
+      #   displayname: REXML::XPath.first(xml, "//d:displayname").text,
+      #   ctag: REXML::XPath.first(xml, "//cs:getctag").text,
+      # ,
+      #   sync_token: REXML::XPath.first(xml, "//d:sync-token").text
+      # }
     end
 
     def create(displayname: "", description: "")
