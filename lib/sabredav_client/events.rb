@@ -42,8 +42,8 @@ module SabredavClient
       all_nodes = xml.root.elements
       all_nodes.each do |nodes|
         result << {
-          :ical => Icalendar.parse(nodes.elements["//d:response/d:propstat/d:prop/cal:calendar-data"].text),
-          :url => nodes.elements["//d:response/d:href"].text
+          :ical => Icalendar.parse(nodes.elements["d:propstat/d:prop/cal:calendar-data"].text),
+          :url => nodes.elements["d:href"].text
         }
       end
       #REXML::XPath.each( xml, '//c:calendar-data/', {"c"=>"urn:ietf:params:xml:ns:caldav"} ){|c| result << c.text + "\n"}
