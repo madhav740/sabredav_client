@@ -3,8 +3,8 @@ module SabredavClient
   class Events
     attr_accessor :client
 
-    def initialize(client)
-      @client = client
+    def initialize(data)
+      @client = SabredavClient::Client.new(data)
     end
 
     def find(uri)
@@ -40,10 +40,11 @@ module SabredavClient
 
       xml = REXML::Document.new(res.body)
       all_nodes = xml.root.elements
+      base_url = (client.ssl ? "https://" : "http://") +client.host
       all_nodes.each do |nodes|
         result << {
           :ical => Icalendar.parse(nodes.elements["d:propstat/d:prop/cal:calendar-data"].text),
-          :url => nodes.elements["d:href"].text
+          :url => base_url+nodes.elements["d:href"].text
         }
       end
       #REXML::XPath.each( xml, '//c:calendar-data/', {"c"=>"urn:ietf:params:xml:ns:caldav"} ){|c| result << c.text + "\n"}

@@ -4,11 +4,9 @@ module SabredavClient
     attr_accessor :client
 
     def initialize(data)
+      base_url = get_calendar_home_url(data)
+      data[:uri] = base_url
       @client = SabredavClient::Client.new(data)
-    end
-
-    def events
-      @events ||= SabredavClient::Events.new(client)
     end
 
     def info
@@ -20,25 +18,32 @@ module SabredavClient
 
       SabredavClient::Errors::errorhandling(res)
       result = []
-
+      base_url = (client.ssl ? "https://" : "http://") +client.host
       xml = REXML::Document.new(res.body)
       all_nodes = xml.root.elements
       all_nodes.each do |nodes|
         result << {
           status: nodes.elements["d:propstat/d:status"].text.split()[1],
-          calendar_url: nodes.elements["d:href"].text,
+          calendar_url: base_url+nodes.elements["d:href"].text.chomp!("/"),
           displayname: nodes.elements["d:propstat/d:prop/d:displayname"].text,
           sync_token: nodes.elements["d:propstat/d:prop/d:sync-token"].text,
           ctag: nodes.elements["d:propstat/d:prop/cs:getctag"].text
         }
       end
-      result
-      # {
-      #   displayname: REXML::XPath.first(xml, "//d:displayname").text,
-      #   ctag: REXML::XPath.first(xml, "//cs:getctag").text,
-      # ,
-      #   sync_token: REXML::XPath.first(xml, "//d:sync-token").text
-      # }
+      return result
+    end
+
+    def get_calendar_home_url(data)
+      principal_client = SabredavClient::Client.new(data)
+      header  = {content_type: "application/xml"}
+      body    = SabredavClient::XmlRequestBuilder::PROPFINDCalendarUrl.new(properties: [:calendar_home_set]).to_xml
+      req = principal_client.create_request(:propfind, header: header, body: body)
+      res = req.run
+      SabredavClient::Errors::errorhandling(res)
+      xml = REXML::Document.new(res.body)
+      base_url = (principal_client.ssl ? "https://" : "http://") +principal_client.host
+      calendar_home_url = xml.root.elements.first.elements["d:propstat/d:prop/cal:calendar-home-set/d:href"].text.chomp!("/")
+      return base_url+calendar_home_url
     end
 
     def create(displayname: "", description: "")
